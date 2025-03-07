@@ -7,6 +7,7 @@ import ResponseCard from "@/components/response-card"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { initKnowledgeBase, searchKnowledge } from "@/lib/knowledge-base"
+import { toast } from 'react-hot-toast'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -20,37 +21,50 @@ export default function Home() {
   const [showResponse, setShowResponse] = useState(false)
   const [recognition, setRecognition] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isSpeechSupported, setIsSpeechSupported] = useState(true)
 
   // 初始化语音识别
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // @ts-ignore - SpeechRecognition 不在标准 TypeScript 类型中
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const recognitionInstance = new SpeechRecognition()
-        recognitionInstance.continuous = false
-        recognitionInstance.lang = 'zh-CN'
-        recognitionInstance.interimResults = false
-        recognitionInstance.maxAlternatives = 1
+      try {
+        // @ts-ignore - SpeechRecognition 不在标准 TypeScript 类型中
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        if (SpeechRecognition) {
+          console.log('初始化语音识别...');
+          const recognitionInstance = new SpeechRecognition()
+          recognitionInstance.continuous = false
+          recognitionInstance.lang = 'zh-CN'
+          recognitionInstance.interimResults = false
+          recognitionInstance.maxAlternatives = 1
 
-        recognitionInstance.onresult = (event: any) => {
-          const speechResult = event.results[0][0].transcript
-          setQuery(speechResult)
-          handleSendMessage(speechResult)
+          recognitionInstance.onresult = (event: any) => {
+            const speechResult = event.results[0][0].transcript
+            console.log('识别结果:', speechResult);
+            setQuery(speechResult)
+            handleSendMessage(speechResult)
+          }
+
+          recognitionInstance.onerror = (event: any) => {
+            console.error('语音识别错误:', event.error)
+            setIsListening(false)
+            toast.error(`语音识别错误: ${event.error}`)
+          }
+
+          recognitionInstance.onend = () => {
+            console.log('语音识别结束');
+            setIsListening(false)
+          }
+
+          setRecognition(recognitionInstance)
+        } else {
+          console.error('浏览器不支持语音识别')
+          setIsSpeechSupported(false)
+          toast.error('您的浏览器不支持语音识别功能，请使用 Chrome 浏览器')
         }
-
-        recognitionInstance.onerror = (event: any) => {
-          console.error('语音识别错误:', event.error)
-          setIsListening(false)
-        }
-
-        recognitionInstance.onend = () => {
-          setIsListening(false)
-        }
-
-        setRecognition(recognitionInstance)
-      } else {
-        console.error('您的浏览器不支持语音识别功能')
+      } catch (error) {
+        console.error('初始化语音识别失败:', error)
+        setIsSpeechSupported(false)
+        toast.error('初始化语音识别失败，请使用 Chrome 浏览器')
       }
     }
   }, [])
@@ -61,7 +75,13 @@ export default function Home() {
   }, []);
 
   const toggleListening = () => {
+    if (!recognition) {
+      toast.error('语音识别未初始化，请刷新页面重试')
+      return
+    }
+
     if (isListening) {
+      console.log('停止录音...');
       recognition?.stop()
       setIsListening(false)
     } else {
@@ -71,10 +91,13 @@ export default function Home() {
         setResponse("")
         setShowResponse(false)
         
+        console.log('开始录音...');
         recognition?.start()
         setIsListening(true)
       } catch (error) {
         console.error('启动语音识别失败:', error)
+        toast.error('启动语音识别失败，请刷新页面重试')
+        setIsListening(false)
       }
     }
   }
@@ -110,7 +133,9 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-2xl md:text-3xl font-bold text-blue-800 mb-4">智能政务语音助手</h2>
             <p className="text-blue-600 max-w-2xl mx-auto">
-              请点击下方麦克风按钮，用普通话清晰地说出您的问题，例如"如何办理居民身份证"
+              {isSpeechSupported 
+                ? '请点击下方麦克风按钮，用普通话清晰地说出您的问题，例如"如何办理居民身份证"'
+                : '抱歉，您的浏览器不支持语音识别功能，请使用 Chrome 浏览器访问'}
             </p>
           </div>
 
@@ -118,10 +143,13 @@ export default function Home() {
             <div className="relative">
               <button
                 onClick={toggleListening}
+                disabled={!isSpeechSupported}
                 className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
-                  isListening 
-                    ? "bg-red-500 hover:bg-red-600" 
-                    : "bg-blue-600 hover:bg-blue-700"
+                  !isSpeechSupported 
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : isListening 
+                      ? "bg-red-500 hover:bg-red-600" 
+                      : "bg-blue-600 hover:bg-blue-700"
                 }`}
                 aria-label={isListening ? "停止录音" : "开始录音"}
               >
