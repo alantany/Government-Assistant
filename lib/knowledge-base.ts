@@ -43,15 +43,13 @@ export async function searchKnowledge(query: string): Promise<string> {
     
     if (!results || results.length === 0) {
       console.log('未找到相关结果');
-      return "抱歉，目前知识库中没有找到相关的信息。建议您通过以下方式获取帮助：\n1. 访问政务大厅现场咨询\n2. 拨打政务服务热线\n3. 在工作时间与人工客服联系";
+      return "抱歉，您询问的问题目前不在我们的知识库中。建议您：\n1. 请前往政务大厅相关窗口现场咨询\n2. 拨打政务服务热线12345\n3. 在工作时间与人工客服联系";
     }
 
-    // 如果找到结果，返回最相关的答案
-    console.log('找到相关结果，数量:', results.length);
-    return `根据知识库内容为您解答：\n\n${results.join('\n\n')}`;
+    // 直接返回结果，不添加前缀
+    return results.join('\n\n');
   } catch (error) {
     console.error('搜索知识库出错:', error);
-    // 重新抛出错误，让上层处理
     throw error;
   }
 } 

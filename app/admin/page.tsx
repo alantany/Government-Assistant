@@ -5,6 +5,7 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import UploadForm from '@/components/upload-form'
 import VectorContentViewer from '@/components/vector-content-viewer'
+import SettingsPanel from '@/components/settings-panel'
 
 export default function AdminPage() {
   return (
@@ -21,6 +22,16 @@ export default function AdminPage() {
           </div>
 
           <div className="grid gap-8">
+            {/* 系统设置 */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-4 border-b">
+                <h2 className="text-xl font-semibold">系统设置</h2>
+              </div>
+              <div className="p-4">
+                <SettingsPanel />
+              </div>
+            </div>
+
             {/* 上传表单 */}
             <div className="bg-white rounded-lg shadow">
               <div className="p-4 border-b">

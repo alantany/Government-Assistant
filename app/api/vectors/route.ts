@@ -139,8 +139,8 @@ export async function GET(request: Request) {
       preview: s.content.substring(0, 50)
     })));
     
-    // 过滤分数过低的结果，降低阈值以增加匹配概率
-    const threshold = 0.3; // 降低相似度阈值
+    // 提高相似度阈值，确保只返回高度相关的结果
+    const threshold = 0.6; // 提高相似度阈值
     const filteredResults = scored.filter(item => item.score >= threshold);
     
     console.log('过滤后的结果数量:', filteredResults.length);
@@ -149,10 +149,10 @@ export async function GET(request: Request) {
     if (filteredResults.length === 0) {
       console.log('未找到相似度足够高的结果，最高分数:', scored[0]?.score);
       return NextResponse.json({ 
-        results: [],
+        results: ['抱歉，您询问的问题目前不在我们的知识库中。建议您：\n1. 请前往政务大厅相关窗口现场咨询\n2. 拨打政务服务热线12345\n3. 在工作时间与人工客服联系'],
         debug: { 
           message: '未找到相似度足够高的结果',
-          query,
+          query: query,
           topScores: scored.slice(0, 3).map(item => ({
             score: item.score,
             content: item.content.substring(0, 50) + '...',

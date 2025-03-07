@@ -1,7 +1,7 @@
 "use client"
 
 import { Volume2, VolumeX } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from 'react-hot-toast'
 
 interface ResponseCardProps {
@@ -10,6 +10,22 @@ interface ResponseCardProps {
 
 export default function ResponseCard({ response: textContent }: ResponseCardProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [autoSpeak, setAutoSpeak] = useState(false)
+
+  useEffect(() => {
+    // 从 localStorage 读取自动朗读设置
+    const savedSetting = localStorage.getItem('autoSpeak')
+    if (savedSetting !== null) {
+      setAutoSpeak(savedSetting === 'true')
+    }
+  }, [])
+
+  useEffect(() => {
+    // 如果启用了自动朗读，自动开始播放
+    if (autoSpeak && textContent) {
+      handleSpeak();
+    }
+  }, [autoSpeak, textContent]);
 
   const handleSpeak = async () => {
     if (isSpeaking) {
